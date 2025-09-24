@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toshiro News Hub</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: #0b0f1a;
+      color: #f5f5f5;
+      overflow-x: hidden;
+    }
+    header {
+      background: linear-gradient(90deg, #ff6b6b, #ffa06b);
+      padding: 15px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 26px; letter-spacing: 1px; }
+    .search-bar { margin-top: 10px; }
+    .search-bar input {
+      padding: 8px;
+      width: 80%;
+      max-width: 400px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+    .section-title {
+      font-size: 22px;
+      color: #ffa06b;
+      margin: 20px 0 10px;
+      text-align: center;
+    }
+    .news-container, .anime-container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 10px;
+    }
+    .card {
+      position: relative;
+      background: rgba(19, 27, 44, 0.85);
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(255, 160, 107, 0.5);
+    }
+    .card h2 {
+      margin: 0 0 10px 0;
+      color: #ffa06b;
+      font-size: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    .card p { 
+      line-height: 1.6; 
+      font-size: 15px; 
+      position: relative;
+      z-index: 2;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Animated background effect */
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: url("https://i.ibb.co/QPnJG2p/anime-bg.gif") center/cover no-repeat;
+      opacity: 0.25;
+      animation: moveBg 15s linear infinite;
+      z-index: 1;
+    }
+    @keyframes moveBg {
+      from { transform: translate(0,0) scale(1.2); }
+      to { transform: translate(-10%, -10%) scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Toshiro News Hub</h1>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search news...">
+    </div>
+  </header>
+
+  <!-- News Section -->
+  <div class="news-container" id="newsContainer">
+    <h2 class="section-title">Latest Anime News</h2>
+    <p>Loading news...</p>
+  </div>
+
+  <!-- Trending Section -->
+  <div class="anime-container" id="animeContainer">
+    <h2 class="section-title">Trending Anime</h2>
+    <p>Loading trending anime...</p>
+  </div>
+
+  <script>
+    const newsContainer = document.getElementById("newsContainer");
+    const animeContainer = document.getElementById("animeContainer");
+
+    // 🔍 Search filter
+    document.getElementById("searchInput").addEventListener("keyup", function() {
+      let input = this.value.toLowerCase();
+      let cards = newsContainer.getElementsByClassName("card");
+      for (let card of cards) {
+        let text = card.innerText.toLowerCase();
+        card.style.display = text.includes(input) ? "" : "none";
+      }
+    });
+
+    // 📰 Fetch Anime News from ANN via rss2json
+    fetch("https://api.rss2json.com/v1/api.json?rss_url=https://www.animenewsnetwork.com/all/rss.xml?ann-edition=w")
+      .then(res => res.json())
+      .then(data => {
+        newsContainer.innerHTML = "<h2 class='section-title'>Latest Anime News</h2>";
+        if (data.items && data.items.length > 0) {
+          data.items.slice(0, 6).forEach(item => {
+            newsContainer.innerHTML += `
+              <a class="card" href="${item.link}" target="_blank">
+                <h2>${item.title}</h2>
+                <p>${item.description}</p>
+              </a>
+            `;
+          });
+        } else {
+          newsContainer.innerHTML += "<p>No news found.</p>";
+        }
+      })
+      .catch(err => {
+        console.error("News fetch error:", err);
+        newsContainer.innerHTML += "<p>Failed to load news.</p>";
+      });
+
+    // 🔥 Fetch Trending Anime from Jikan API
+    fetch("https://api.jikan.moe/v4/top/anime")
+      .then(res => res.json())
+      .then(data => {
+        animeContainer.innerHTML = "<h2 class='section-title'>Trending Anime</h2>";
+        if (data.data && data.data.length > 0) {
+          data.data.slice(0, 6).forEach(anime => {
+            animeContainer.innerHTML += `
+              <div class="card">
+                <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
+                <h2>${anime.title}</h2>
+                <p>Rank: ${anime.rank} | Score: ${anime.score}</p>
+              </div>
+            `;
+          });
+        } else {
+          animeContainer.innerHTML += "<p>No anime found.</p>";
+        }
+      })
+      .catch(err => {
+        console.error("Anime fetch error:", err);
+        animeContainer.innerHTML += "<p>Failed to load trending anime.</p>";
+      });
+  </script>
+
+</body>
+</html>
